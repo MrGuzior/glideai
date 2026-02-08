@@ -25,7 +25,8 @@ Follow these rules:
 
 10. Do those things only one at a time then cut the completed line paste it into list under point number 12.
     [
-    <!-- Make the clouds appear in random states. -->
+    <!-- Add a simple Sail Sweep favicon. -->
+    <!-- Update all copy to the name of the app Sail Sweep. -->
 
     ]
 
@@ -71,6 +72,7 @@ Follow these rules:
 - 2026-02-08 19:30: Added glider selection carousel in menu with createGliderConfigurations, getGliderAtIndex, updateCarouselDisplay pure functions. Three gliders: Training (20:1, sink 1.8), Standard (30:1, sink 1.5), Competition (45:1, sink 1.2)
 - 2026-02-08: Added speedMultiplier property to glider configurations, better gliders now move faster horizontally. Training (1.0x), Standard (1.3x), Competition (1.8x) speed multipliers applied to clouds, mountains, and trees movement.
 - 2026-02-08: Added random cloud spawn states with getRandomCloudStage and calculateAgeForStage pure functions, clouds now spawn in any stage (invisible, small, big, dying) with correct visual properties and age.
+- 2026-02-08: Added inline SVG favicon with simple glider shape, updated app name to Sail Sweep in title, menu title, and game restart title.
   ]
 
 12. Move the used command here:
@@ -152,6 +154,10 @@ Follow these rules:
    <!-- Make better gliders horizontal speed bigger -->
 
    <!-- Make the clouds appear in random states. -->
+
+   <!-- Add a simple Sail Sweep favicon. -->
+
+   <!-- Update all copy to the name of the app Sail Sweep. -->
 
 ]
 

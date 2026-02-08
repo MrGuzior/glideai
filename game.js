@@ -790,7 +790,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentSinkRate = gliderConfigurations[selectedGliderIndex].sinkRate;
     currentSpeedMultiplier =
       gliderConfigurations[selectedGliderIndex].speedMultiplier;
-    updateMenuTitle(menuTitle, "Glider");
+    updateMenuTitle(menuTitle, "Sail Sweep");
     gameState = createGameState(true, false);
     hideMenu(menu);
   });
