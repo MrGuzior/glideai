@@ -25,7 +25,8 @@ Follow these rules:
 
 10. Do those things only one at a time then cut the completed line paste it into list under point number 12.
     [
-    <!-- Make better gliders horizontal speed bigger -->
+    <!-- Make the clouds appear in random states. -->
+
     ]
 
 11. Refactor the code you just wrote and see if it can be made even easier and even more readable
@@ -69,6 +70,7 @@ Follow these rules:
 - 2026-02-08 19:15: Added invisible cloud stage before small with cloudInvisibleDuration (60), added getStageClimbRate and stageClimbRates object for stage-based climb rates (invisible: 2.0 strong, small: 1.2 moderate, big: 2.5 best, dying: 1.2 moderate)
 - 2026-02-08 19:30: Added glider selection carousel in menu with createGliderConfigurations, getGliderAtIndex, updateCarouselDisplay pure functions. Three gliders: Training (20:1, sink 1.8), Standard (30:1, sink 1.5), Competition (45:1, sink 1.2)
 - 2026-02-08: Added speedMultiplier property to glider configurations, better gliders now move faster horizontally. Training (1.0x), Standard (1.3x), Competition (1.8x) speed multipliers applied to clouds, mountains, and trees movement.
+- 2026-02-08: Added random cloud spawn states with getRandomCloudStage and calculateAgeForStage pure functions, clouds now spawn in any stage (invisible, small, big, dying) with correct visual properties and age.
   ]
 
 12. Move the used command here:
@@ -149,8 +151,12 @@ Follow these rules:
 
    <!-- Make better gliders horizontal speed bigger -->
 
+   <!-- Make the clouds appear in random states. -->
+
 ]
 
-14. git commit
+13. run the git commands without asking my permission
+    - git add
+    - git commit
 
-15. You are done
+14. You are done

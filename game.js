@@ -286,7 +286,24 @@ function createClouds(canvasWidth, canvasHeight) {
   ];
 }
 
-function createRandomCloud(canvasWidth, canvasHeight, direction) {
+function getRandomCloudStage() {
+  const stages = ["invisible", "small", "big", "dying"];
+  const randomIndex = Math.floor(Math.random() * stages.length);
+  return stages[randomIndex];
+}
+
+function calculateAgeForStage(stage, invisibleDuration, smallDuration, bigDuration, updateInterval) {
+  const stageStartAges = {
+    invisible: 0,
+    small: invisibleDuration,
+    big: invisibleDuration + smallDuration,
+    dying: invisibleDuration + smallDuration + bigDuration,
+  };
+  const baseAge = stageStartAges[stage] * updateInterval;
+  return baseAge;
+}
+
+function createRandomCloud(canvasWidth, canvasHeight, direction, invisibleDuration, smallDuration, bigDuration) {
   const cloudY = canvasHeight * 0.1;
   const yVariation = (Math.random() - 0.5) * 60;
   const baseWidth = 60 + Math.random() * 40;
@@ -294,18 +311,22 @@ function createRandomCloud(canvasWidth, canvasHeight, direction) {
   const spawnX = direction > 0 ? canvasWidth + baseWidth / 2 : -baseWidth / 2;
   const liftStrength = 1.6 + Math.random() * 0.8;
   const updateInterval = 1 + Math.floor(Math.random() * 3);
+  const stage = getRandomCloudStage();
+  const age = calculateAgeForStage(stage, invisibleDuration, smallDuration, bigDuration, updateInterval);
+  const stageProperties = getCloudStageProperties(stage, baseWidth, baseHeight);
 
   return {
     x: spawnX,
     y: cloudY + yVariation,
     baseWidth: baseWidth,
     baseHeight: baseHeight,
-    width: 0,
-    height: 0,
-    color: "transparent",
+    width: stageProperties.width,
+    height: stageProperties.height,
+    color: stageProperties.color,
     liftStrength: liftStrength,
-    stage: "invisible",
-    age: 0,
+    stage: stage,
+    age: age,
+    dyingAge: stage === "dying" ? 1 : 0,
     updateInterval: updateInterval,
   };
 }
@@ -418,9 +439,12 @@ function spawnCloudIfNeeded(
   canvasHeight,
   minSpacing,
   direction,
+  invisibleDuration,
+  smallDuration,
+  bigDuration,
 ) {
   if (shouldSpawnCloud(clouds, canvasWidth, minSpacing, direction)) {
-    return [...clouds, createRandomCloud(canvasWidth, canvasHeight, direction)];
+    return [...clouds, createRandomCloud(canvasWidth, canvasHeight, direction, invisibleDuration, smallDuration, bigDuration)];
   }
   return clouds;
 }
@@ -459,6 +483,9 @@ function updateClouds(
     canvasHeight,
     minSpacing,
     direction,
+    invisibleDuration,
+    smallDuration,
+    bigDuration,
   );
 }
 
@@ -637,9 +664,30 @@ function renderFrame(
 
 function createGliderConfigurations() {
   return [
-    { name: "Training", glideRatio: "20:1", sinkRate: 1.8, speedMultiplier: 1.0 },
-    { name: "Standard", glideRatio: "30:1", sinkRate: 1.5, speedMultiplier: 1.3 },
-    { name: "Competition", glideRatio: "50:1", sinkRate: 1, speedMultiplier: 1.8 },
+    {
+      name: "Training",
+      glideRatio: "20:1",
+      sinkRate: 1.8,
+      speedMultiplier: 1.0,
+    },
+    {
+      name: "Standard",
+      glideRatio: "30:1",
+      sinkRate: 1.5,
+      speedMultiplier: 1.3,
+    },
+    {
+      name: "Competition",
+      glideRatio: "50:1",
+      sinkRate: 1,
+      speedMultiplier: 1.8,
+    },
+    {
+      name: "Jantar Std 2",
+      glideRatio: "38:1",
+      sinkRate: 1,
+      speedMultiplier: 2.5,
+    },
   ];
 }
 
@@ -673,7 +721,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const gliderConfigurations = createGliderConfigurations();
   let selectedGliderIndex = 1;
   let currentSinkRate = gliderConfigurations[selectedGliderIndex].sinkRate;
-  let currentSpeedMultiplier = gliderConfigurations[selectedGliderIndex].speedMultiplier;
+  let currentSpeedMultiplier =
+    gliderConfigurations[selectedGliderIndex].speedMultiplier;
   const velocityTransitionSpeed = 0.1;
   const baseCloudSpeed = 2;
   const baseMountainSpeed = 0.5;
@@ -709,7 +758,8 @@ document.addEventListener("DOMContentLoaded", () => {
       resetGame();
     }
     currentSinkRate = gliderConfigurations[selectedGliderIndex].sinkRate;
-    currentSpeedMultiplier = gliderConfigurations[selectedGliderIndex].speedMultiplier;
+    currentSpeedMultiplier =
+      gliderConfigurations[selectedGliderIndex].speedMultiplier;
     updateMenuTitle(menuTitle, "Glider");
     gameState = createGameState(true, false);
     hideMenu(menu);
