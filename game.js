@@ -635,11 +635,34 @@ function renderFrame(
   renderSailplane(context, sailplane);
 }
 
+function createGliderConfigurations() {
+  return [
+    { name: "Training", glideRatio: "20:1", sinkRate: 1.8, speedMultiplier: 1.0 },
+    { name: "Standard", glideRatio: "30:1", sinkRate: 1.5, speedMultiplier: 1.3 },
+    { name: "Competition", glideRatio: "50:1", sinkRate: 1, speedMultiplier: 1.8 },
+  ];
+}
+
+function getGliderAtIndex(gliders, index) {
+  const wrappedIndex =
+    ((index % gliders.length) + gliders.length) % gliders.length;
+  return { glider: gliders[wrappedIndex], index: wrappedIndex };
+}
+
+function updateCarouselDisplay(nameElement, statsElement, glider) {
+  nameElement.textContent = glider.name;
+  statsElement.textContent = "Glide Ratio: " + glider.glideRatio;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("gameCanvas");
   const menu = document.getElementById("menu");
   const menuTitle = document.getElementById("menuTitle");
   const startButton = document.getElementById("startButton");
+  const carouselLeft = document.getElementById("carouselLeft");
+  const carouselRight = document.getElementById("carouselRight");
+  const gliderName = document.getElementById("gliderName");
+  const gliderStats = document.getElementById("gliderStats");
   const context = initializeCanvas(canvas);
   const stageClimbRates = {
     invisible: 1.4,
@@ -647,12 +670,15 @@ document.addEventListener("DOMContentLoaded", () => {
     big: 1.2,
     dying: 1.1,
   };
-  const sinkRate = 1.5;
+  const gliderConfigurations = createGliderConfigurations();
+  let selectedGliderIndex = 1;
+  let currentSinkRate = gliderConfigurations[selectedGliderIndex].sinkRate;
+  let currentSpeedMultiplier = gliderConfigurations[selectedGliderIndex].speedMultiplier;
   const velocityTransitionSpeed = 0.1;
-  const cloudSpeed = 2;
-  const mountainSpeed = 0.5;
-  const farTreeSpeed = 0.75;
-  const nearTreeSpeed = 1.25;
+  const baseCloudSpeed = 2;
+  const baseMountainSpeed = 0.5;
+  const baseFarTreeSpeed = 0.75;
+  const baseNearTreeSpeed = 1.25;
   const minCloudSpacing = 400;
   const cloudInvisibleDuration = 60;
   const cloudSmallDuration = 120;
@@ -682,9 +708,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (gameState.isGameOver) {
       resetGame();
     }
+    currentSinkRate = gliderConfigurations[selectedGliderIndex].sinkRate;
+    currentSpeedMultiplier = gliderConfigurations[selectedGliderIndex].speedMultiplier;
     updateMenuTitle(menuTitle, "Glider");
     gameState = createGameState(true, false);
     hideMenu(menu);
+  });
+
+  carouselLeft.addEventListener("click", () => {
+    const result = getGliderAtIndex(
+      gliderConfigurations,
+      selectedGliderIndex - 1,
+    );
+    selectedGliderIndex = result.index;
+    updateCarouselDisplay(gliderName, gliderStats, result.glider);
+  });
+
+  carouselRight.addEventListener("click", () => {
+    const result = getGliderAtIndex(
+      gliderConfigurations,
+      selectedGliderIndex + 1,
+    );
+    selectedGliderIndex = result.index;
+    updateCarouselDisplay(gliderName, gliderStats, result.glider);
   });
 
   canvas.addEventListener("click", () => {
@@ -710,6 +756,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     ground = createGround(canvas.height);
+
+    const cloudSpeed = baseCloudSpeed * currentSpeedMultiplier;
+    const mountainSpeed = baseMountainSpeed * currentSpeedMultiplier;
+    const farTreeSpeed = baseFarTreeSpeed * currentSpeedMultiplier;
+    const nearTreeSpeed = baseNearTreeSpeed * currentSpeedMultiplier;
+
     clouds = updateClouds(
       clouds,
       cloudSpeed,
@@ -739,7 +791,7 @@ document.addEventListener("DOMContentLoaded", () => {
       sailplane,
       clouds,
       stageClimbRates,
-      sinkRate,
+      currentSinkRate,
       velocityTransitionSpeed,
     );
 
