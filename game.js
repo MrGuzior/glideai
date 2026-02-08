@@ -292,7 +292,13 @@ function getRandomCloudStage() {
   return stages[randomIndex];
 }
 
-function calculateAgeForStage(stage, invisibleDuration, smallDuration, bigDuration, updateInterval) {
+function calculateAgeForStage(
+  stage,
+  invisibleDuration,
+  smallDuration,
+  bigDuration,
+  updateInterval,
+) {
   const stageStartAges = {
     invisible: 0,
     small: invisibleDuration,
@@ -303,7 +309,14 @@ function calculateAgeForStage(stage, invisibleDuration, smallDuration, bigDurati
   return baseAge;
 }
 
-function createRandomCloud(canvasWidth, canvasHeight, direction, invisibleDuration, smallDuration, bigDuration) {
+function createRandomCloud(
+  canvasWidth,
+  canvasHeight,
+  direction,
+  invisibleDuration,
+  smallDuration,
+  bigDuration,
+) {
   const cloudY = canvasHeight * 0.1;
   const yVariation = (Math.random() - 0.5) * 60;
   const baseWidth = 60 + Math.random() * 40;
@@ -312,7 +325,14 @@ function createRandomCloud(canvasWidth, canvasHeight, direction, invisibleDurati
   const liftStrength = 1.6 + Math.random() * 0.8;
   const updateInterval = 1 + Math.floor(Math.random() * 3);
   const stage = getRandomCloudStage();
-  const age = calculateAgeForStage(stage, invisibleDuration, smallDuration, bigDuration, updateInterval);
+  console.log(stage);
+  const age = calculateAgeForStage(
+    stage,
+    invisibleDuration,
+    smallDuration,
+    bigDuration,
+    updateInterval,
+  );
   const stageProperties = getCloudStageProperties(stage, baseWidth, baseHeight);
 
   return {
@@ -444,7 +464,17 @@ function spawnCloudIfNeeded(
   bigDuration,
 ) {
   if (shouldSpawnCloud(clouds, canvasWidth, minSpacing, direction)) {
-    return [...clouds, createRandomCloud(canvasWidth, canvasHeight, direction, invisibleDuration, smallDuration, bigDuration)];
+    return [
+      ...clouds,
+      createRandomCloud(
+        canvasWidth,
+        canvasHeight,
+        direction,
+        invisibleDuration,
+        smallDuration,
+        bigDuration,
+      ),
+    ];
   }
   return clouds;
 }
