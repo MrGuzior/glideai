@@ -2,17 +2,17 @@ Follow these rules:
 
 1. Be pure where possible
 
-2. Have no side effects unless explicitly requested
+2. Do the best you can.
 
-3. Not access global state directly
+3. Have no side effects unless explicitly requested
 
-4. Accept dependencies via parameters
+4. Not access global state directly
 
-5. Be testable in isolation
+5. Accept dependencies via parameters
 
-6. Refer to my always as Konrad
+6. Be testable in isolation
 
-7. when a task is done, comment it out.
+7. Refer to my always as Konrad
 
 8. Always have descriptive names
 
@@ -25,9 +25,7 @@ Follow these rules:
 
 10. Do those things only one at a time then cut the completed line paste it into list under point number 12.
     [
-    <!-- Add a simple Sail Sweep favicon. -->
-    <!-- Update all copy to the name of the app Sail Sweep. -->
-
+    <!-- Make the clouds bigger and more random -->
     ]
 
 11. Refactor the code you just wrote and see if it can be made even easier and even more readable
@@ -73,10 +71,21 @@ Follow these rules:
 - 2026-02-08: Added speedMultiplier property to glider configurations, better gliders now move faster horizontally. Training (1.0x), Standard (1.3x), Competition (1.8x) speed multipliers applied to clouds, mountains, and trees movement.
 - 2026-02-08: Added random cloud spawn states with getRandomCloudStage and calculateAgeForStage pure functions, clouds now spawn in any stage (invisible, small, big, dying) with correct visual properties and age.
 - 2026-02-08: Added inline SVG favicon with simple glider shape, updated app name to Sail Sweep in title, menu title, and game restart title.
+- 2026-02-08: Made cloud cycles faster (halved base durations) and more random with generateRandomDurations pure function giving each cloud 0.5x-1.5x multiplier. Clouds now store per-cloud durations object, advanceCloudStage and removeExpiredClouds use cloud's own durations.
+- 2026-02-08: Added smooth horizontal speed transition with smoothTransition pure function, targetDirection/currentDirection state variables, and directionTransitionSpeed (0.05) for gradual direction changes on click.
+- 2026-02-08: Replaced rectangle glider with paper airplane shape using renderPaperAirplane pure function drawing triangular streamlined shape with nose, tail, and wing points.
+- 2026-02-08: Added turn animation to glider by passing direction through renderFrame, renderSailplane, and renderPaperAirplane. Direction value (-1 to 1) scales x-offsets to smoothly flip the airplane during turns.
+- 2026-02-08: Made cloud distribution random with getDistanceToEdge pure function, minCloudSpacing (200) and maxCloudSpacing (500). Clouds spawn with random chance between min/max, guaranteed spawn at max distance.
   ]
 
 12. Move the used command here:
 [
+   <!-- Make the clouds bigger and more random -->
+
+   <!-- Put all the "config", "data" on top of the file so it's easily findable and changable -->
+
+   <!-- Refactor the cloud lifecycle code. Set min size and max size and then how many stages it is supposed to have. Same with the strength. -->
+
    <!-- create a simple index.html -->
 
    <!-- add pure html structure for an app with a map as it's start page with buttons to search and to list stuff and create stuff -->
@@ -159,10 +168,8 @@ Follow these rules:
 
    <!-- Update all copy to the name of the app Sail Sweep. -->
 
-]
+   <!-- make cloud cycles faster and more random -->
 
-13. run the git commands without asking my permission
-    - git add
-    - git commit
+]
 
 14. You are done

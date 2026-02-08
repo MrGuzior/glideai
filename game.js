@@ -1,3 +1,97 @@
+// ============================================================================
+// CONFIGURATION & DATA
+// ============================================================================
+
+const CLOUD_LIFECYCLE_CONFIG = {
+  minSize: 0.0,
+  maxSize: 1.0,
+  minStrength: 1.1,
+  maxStrength: 1.3,
+  baseWidthMin: 100,
+  baseWidthMax: 220,
+  baseHeightMin: 35,
+  baseHeightMax: 75,
+  yVariationRange: 120,
+  stages: [
+    {
+      name: "invisible",
+      sizeMultiplier: 0.0,
+      strengthMultiplier: 1.0,
+      baseDuration: 30,
+      color: "transparent",
+    },
+    {
+      name: "small",
+      sizeMultiplier: 0.6,
+      strengthMultiplier: 0.93,
+      baseDuration: 60,
+      color: "#ecf0f1",
+    },
+    {
+      name: "big",
+      sizeMultiplier: 1.0,
+      strengthMultiplier: 0.86,
+      baseDuration: 150,
+      color: "#ecf0f1",
+    },
+    {
+      name: "dying",
+      sizeMultiplier: 0.7,
+      strengthMultiplier: 0.59,
+      baseDuration: 100,
+      color: "#bdc3c7",
+    },
+  ],
+};
+
+const GLIDER_CONFIGURATIONS = [
+  {
+    name: "Training",
+    glideRatio: "20:1",
+    sinkRate: 1.8,
+    speedMultiplier: 1.0,
+  },
+  {
+    name: "Standard",
+    glideRatio: "30:1",
+    sinkRate: 1.5,
+    speedMultiplier: 1.3,
+  },
+  {
+    name: "Competition",
+    glideRatio: "50:1",
+    sinkRate: 1,
+    speedMultiplier: 1.8,
+  },
+  {
+    name: "Jantar Std 2",
+    glideRatio: "38:1",
+    sinkRate: 1,
+    speedMultiplier: 2.5,
+  },
+  {
+    name: "JS6",
+    glideRatio: "100:1",
+    sinkRate: 1,
+    speedMultiplier: 4.5,
+  },
+];
+
+const GAME_CONFIG = {
+  velocityTransitionSpeed: 0.1,
+  directionTransitionSpeed: 0.1,
+  baseCloudSpeed: 2,
+  baseMountainSpeed: 0.5,
+  baseFarTreeSpeed: 0.75,
+  baseNearTreeSpeed: 1.25,
+  minCloudSpacing: 300,
+  maxCloudSpacing: 500,
+};
+
+// ============================================================================
+// CANVAS UTILITIES
+// ============================================================================
+
 function initializeCanvas(canvasElement) {
   const context = canvasElement.getContext("2d");
 
@@ -241,99 +335,135 @@ function renderTrees(context, trees) {
   trees.forEach((tree) => renderTree(context, tree));
 }
 
-function createClouds(canvasWidth, canvasHeight) {
+function createClouds(canvasWidth, canvasHeight, lifecycleConfig) {
   const cloudY = canvasHeight * 0.1;
   return [
     {
       x: canvasWidth * 0.2,
-      y: cloudY,
-      baseWidth: 120,
-      baseHeight: 40,
-      width: 120,
-      height: 40,
+      y: cloudY + (Math.random() - 0.5) * 80,
+      baseWidth: 140 + Math.random() * 60,
+      baseHeight: 45 + Math.random() * 25,
+      width: 140 + Math.random() * 60,
+      height: 45 + Math.random() * 25,
       color: "#ecf0f1",
       liftStrength: 1.6 + Math.random() * 0.8,
       stage: "big",
       age: 200,
+      dyingAge: 0,
       updateInterval: 1 + Math.floor(Math.random() * 3),
+      durations: generateRandomDurations(lifecycleConfig),
     },
     {
       x: canvasWidth * 0.5,
-      y: cloudY + 20,
-      baseWidth: 100,
-      baseHeight: 35,
-      width: 100,
-      height: 35,
+      y: cloudY + (Math.random() - 0.5) * 80,
+      baseWidth: 120 + Math.random() * 80,
+      baseHeight: 40 + Math.random() * 30,
+      width: 120 + Math.random() * 80,
+      height: 40 + Math.random() * 30,
       color: "#ecf0f1",
       liftStrength: 1.6 + Math.random() * 0.8,
       stage: "big",
       age: 200,
+      dyingAge: 0,
       updateInterval: 1 + Math.floor(Math.random() * 3),
+      durations: generateRandomDurations(lifecycleConfig),
     },
     {
       x: canvasWidth * 0.8,
-      y: cloudY - 10,
-      baseWidth: 140,
-      baseHeight: 45,
-      width: 140,
-      height: 45,
+      y: cloudY + (Math.random() - 0.5) * 80,
+      baseWidth: 160 + Math.random() * 80,
+      baseHeight: 50 + Math.random() * 35,
+      width: 160 + Math.random() * 80,
+      height: 50 + Math.random() * 35,
       color: "#ecf0f1",
       liftStrength: 1.6 + Math.random() * 0.8,
       stage: "big",
       age: 200,
+      dyingAge: 0,
       updateInterval: 1 + Math.floor(Math.random() * 3),
+      durations: generateRandomDurations(lifecycleConfig),
     },
   ];
 }
 
-function getRandomCloudStage() {
-  const stages = ["invisible", "small", "big", "dying"];
-  const randomIndex = Math.floor(Math.random() * stages.length);
-  return stages[randomIndex];
+function getCloudLifecycleStageNames(lifecycleConfig) {
+  return lifecycleConfig.stages.map((stage) => stage.name);
+}
+
+function getRandomCloudStage(lifecycleConfig) {
+  const stageNames = getCloudLifecycleStageNames(lifecycleConfig);
+  const randomIndex = Math.floor(Math.random() * stageNames.length);
+  return stageNames[randomIndex];
+}
+
+function generateRandomDurations(lifecycleConfig) {
+  const randomMultiplier = 0.5 + Math.random() * 1.0;
+  const durations = {};
+  lifecycleConfig.stages.forEach((stage) => {
+    durations[stage.name + "Duration"] = Math.floor(
+      stage.baseDuration * randomMultiplier,
+    );
+  });
+  return durations;
+}
+
+function getStageClimbRate(stageName, lifecycleConfig) {
+  const stage = lifecycleConfig.stages.find((s) => s.name === stageName);
+  if (!stage) return lifecycleConfig.minStrength;
+  const strengthRange =
+    lifecycleConfig.maxStrength - lifecycleConfig.minStrength;
+  return lifecycleConfig.minStrength + strengthRange * stage.strengthMultiplier;
 }
 
 function calculateAgeForStage(
-  stage,
-  invisibleDuration,
-  smallDuration,
-  bigDuration,
+  stageName,
+  durations,
   updateInterval,
+  lifecycleConfig,
 ) {
-  const stageStartAges = {
-    invisible: 0,
-    small: invisibleDuration,
-    big: invisibleDuration + smallDuration,
-    dying: invisibleDuration + smallDuration + bigDuration,
-  };
-  const baseAge = stageStartAges[stage] * updateInterval;
-  return baseAge;
+  let cumulativeAge = 0;
+  for (const stage of lifecycleConfig.stages) {
+    if (stage.name === stageName) {
+      return cumulativeAge * updateInterval;
+    }
+    const durationKey = stage.name + "Duration";
+    cumulativeAge += durations[durationKey] || 0;
+  }
+  return cumulativeAge * updateInterval;
 }
 
 function createRandomCloud(
   canvasWidth,
   canvasHeight,
   direction,
-  invisibleDuration,
-  smallDuration,
-  bigDuration,
+  lifecycleConfig,
 ) {
   const cloudY = canvasHeight * 0.1;
-  const yVariation = (Math.random() - 0.5) * 60;
-  const baseWidth = 60 + Math.random() * 40;
-  const baseHeight = 20 + Math.random() * 15;
+  const yVariation = (Math.random() - 0.5) * lifecycleConfig.yVariationRange;
+  const widthRange =
+    lifecycleConfig.baseWidthMax - lifecycleConfig.baseWidthMin;
+  const heightRange =
+    lifecycleConfig.baseHeightMax - lifecycleConfig.baseHeightMin;
+  const baseWidth = lifecycleConfig.baseWidthMin + Math.random() * widthRange;
+  const baseHeight =
+    lifecycleConfig.baseHeightMin + Math.random() * heightRange;
   const spawnX = direction > 0 ? canvasWidth + baseWidth / 2 : -baseWidth / 2;
   const liftStrength = 1.6 + Math.random() * 0.8;
   const updateInterval = 1 + Math.floor(Math.random() * 3);
-  const stage = getRandomCloudStage();
-  console.log(stage);
+  const stage = getRandomCloudStage(lifecycleConfig);
+  const durations = generateRandomDurations(lifecycleConfig);
   const age = calculateAgeForStage(
     stage,
-    invisibleDuration,
-    smallDuration,
-    bigDuration,
+    durations,
     updateInterval,
+    lifecycleConfig,
   );
-  const stageProperties = getCloudStageProperties(stage, baseWidth, baseHeight);
+  const stageProperties = getCloudStageProperties(
+    stage,
+    baseWidth,
+    baseHeight,
+    lifecycleConfig,
+  );
 
   return {
     x: spawnX,
@@ -348,30 +478,49 @@ function createRandomCloud(
     age: age,
     dyingAge: stage === "dying" ? 1 : 0,
     updateInterval: updateInterval,
+    durations: durations,
   };
 }
 
-function getCloudStageProperties(stage, baseWidth, baseHeight) {
-  const stages = {
-    invisible: { sizeMultiplier: 0, color: "transparent" },
-    small: { sizeMultiplier: 0.6, color: "#ecf0f1" },
-    big: { sizeMultiplier: 1.0, color: "#ecf0f1" },
-    dying: { sizeMultiplier: 0.7, color: "#bdc3c7" },
-  };
-  const properties = stages[stage];
-  return {
-    width: baseWidth * properties.sizeMultiplier,
-    height: baseHeight * properties.sizeMultiplier,
-    color: properties.color,
-  };
-}
-
-function advanceCloudStage(
-  cloud,
-  invisibleDuration,
-  smallDuration,
-  bigDuration,
+function getCloudStageProperties(
+  stageName,
+  baseWidth,
+  baseHeight,
+  lifecycleConfig,
 ) {
+  const stage = lifecycleConfig.stages.find((s) => s.name === stageName);
+  if (!stage) {
+    return { width: 0, height: 0, color: "transparent" };
+  }
+  return {
+    width: baseWidth * stage.sizeMultiplier,
+    height: baseHeight * stage.sizeMultiplier,
+    color: stage.color,
+  };
+}
+
+function findNextStage(cloud, effectiveAge, lifecycleConfig) {
+  let cumulativeAge = 0;
+
+  for (let i = 0; i < lifecycleConfig.stages.length; i++) {
+    const stage = lifecycleConfig.stages[i];
+    const durationKey = stage.name + "Duration";
+    const stageDuration = cloud.durations[durationKey] || 0;
+
+    if (cloud.stage === stage.name) {
+      if (effectiveAge >= cumulativeAge + stageDuration) {
+        const nextStage = lifecycleConfig.stages[i + 1];
+        return nextStage ? nextStage.name : cloud.stage;
+      }
+      return cloud.stage;
+    }
+    cumulativeAge += stageDuration;
+  }
+
+  return cloud.stage;
+}
+
+function advanceCloudStage(cloud, lifecycleConfig) {
   const newAge = cloud.age + 1;
   const shouldUpdate = newAge % cloud.updateInterval === 0;
 
@@ -379,32 +528,16 @@ function advanceCloudStage(
     return { ...cloud, age: newAge };
   }
 
-  let newStage = cloud.stage;
-  let dyingAge = cloud.dyingAge || 0;
   const effectiveAge = Math.floor(newAge / cloud.updateInterval);
-
-  if (cloud.stage === "invisible" && effectiveAge >= invisibleDuration) {
-    newStage = "small";
-  } else if (
-    cloud.stage === "small" &&
-    effectiveAge >= invisibleDuration + smallDuration
-  ) {
-    newStage = "big";
-  } else if (
-    cloud.stage === "big" &&
-    effectiveAge >= invisibleDuration + smallDuration + bigDuration
-  ) {
-    newStage = "dying";
-  }
-
-  if (newStage === "dying") {
-    dyingAge = cloud.dyingAge !== undefined ? cloud.dyingAge + 1 : 1;
-  }
-
+  const newStage = findNextStage(cloud, effectiveAge, lifecycleConfig);
+  const lastStage = lifecycleConfig.stages[lifecycleConfig.stages.length - 1];
+  const isLastStage = newStage === lastStage.name;
+  const dyingAge = isLastStage ? (cloud.dyingAge || 0) + 1 : 0;
   const stageProperties = getCloudStageProperties(
     newStage,
     cloud.baseWidth,
     cloud.baseHeight,
+    lifecycleConfig,
   );
 
   return {
@@ -418,10 +551,13 @@ function advanceCloudStage(
   };
 }
 
-function removeExpiredClouds(clouds, dyingDuration) {
+function removeExpiredClouds(clouds, lifecycleConfig) {
+  const lastStage = lifecycleConfig.stages[lifecycleConfig.stages.length - 1];
+  const lastStageDurationKey = lastStage.name + "Duration";
+
   return clouds.filter((cloud) => {
-    if (cloud.stage !== "dying") return true;
-    return (cloud.dyingAge || 0) < dyingDuration;
+    if (cloud.stage !== lastStage.name) return true;
+    return (cloud.dyingAge || 0) < cloud.durations[lastStageDurationKey];
   });
 }
 
@@ -435,22 +571,38 @@ function removeOffscreenClouds(clouds, canvasWidth, direction) {
   });
 }
 
-function shouldSpawnCloud(clouds, canvasWidth, minSpacing, direction) {
-  if (clouds.length === 0) return true;
+function getDistanceToEdge(clouds, canvasWidth, direction) {
+  if (clouds.length === 0) return Infinity;
 
   if (direction > 0) {
     const rightmostCloud = clouds.reduce(
       (max, cloud) => (cloud.x > max.x ? cloud : max),
       clouds[0],
     );
-    return rightmostCloud.x < canvasWidth - minSpacing;
+    return canvasWidth - rightmostCloud.x;
   } else {
     const leftmostCloud = clouds.reduce(
       (min, cloud) => (cloud.x < min.x ? cloud : min),
       clouds[0],
     );
-    return leftmostCloud.x > minSpacing;
+    return leftmostCloud.x;
   }
+}
+
+function shouldSpawnCloud(
+  clouds,
+  canvasWidth,
+  minSpacing,
+  maxSpacing,
+  direction,
+) {
+  const distance = getDistanceToEdge(clouds, canvasWidth, direction);
+
+  if (distance >= maxSpacing) return true;
+  if (distance < minSpacing) return false;
+
+  const spawnChance = (distance - minSpacing) / (maxSpacing - minSpacing);
+  return Math.random() < spawnChance * 0.1;
 }
 
 function spawnCloudIfNeeded(
@@ -458,22 +610,16 @@ function spawnCloudIfNeeded(
   canvasWidth,
   canvasHeight,
   minSpacing,
+  maxSpacing,
   direction,
-  invisibleDuration,
-  smallDuration,
-  bigDuration,
+  lifecycleConfig,
 ) {
-  if (shouldSpawnCloud(clouds, canvasWidth, minSpacing, direction)) {
+  if (
+    shouldSpawnCloud(clouds, canvasWidth, minSpacing, maxSpacing, direction)
+  ) {
     return [
       ...clouds,
-      createRandomCloud(
-        canvasWidth,
-        canvasHeight,
-        direction,
-        invisibleDuration,
-        smallDuration,
-        bigDuration,
-      ),
+      createRandomCloud(canvasWidth, canvasHeight, direction, lifecycleConfig),
     ];
   }
   return clouds;
@@ -489,19 +635,17 @@ function updateClouds(
   canvasWidth,
   canvasHeight,
   minSpacing,
+  maxSpacing,
   direction,
-  invisibleDuration,
-  smallDuration,
-  bigDuration,
-  dyingDuration,
+  lifecycleConfig,
 ) {
   const agedClouds = clouds.map((cloud) =>
-    advanceCloudStage(cloud, invisibleDuration, smallDuration, bigDuration),
+    advanceCloudStage(cloud, lifecycleConfig),
   );
   const movedClouds = agedClouds.map((cloud) =>
     updateCloudPosition(cloud, speed, direction),
   );
-  const withoutExpired = removeExpiredClouds(movedClouds, dyingDuration);
+  const withoutExpired = removeExpiredClouds(movedClouds, lifecycleConfig);
   const cleanedClouds = removeOffscreenClouds(
     withoutExpired,
     canvasWidth,
@@ -512,10 +656,9 @@ function updateClouds(
     canvasWidth,
     canvasHeight,
     minSpacing,
+    maxSpacing,
     direction,
-    invisibleDuration,
-    smallDuration,
-    bigDuration,
+    lifecycleConfig,
   );
 }
 
@@ -591,34 +734,26 @@ function findCloudAbove(sailplane, clouds) {
   return clouds.find((cloud) => isUnderCloud(sailplane, cloud));
 }
 
-function smoothVelocityTransition(
-  currentVelocity,
-  targetVelocity,
-  transitionSpeed,
-) {
-  const difference = targetVelocity - currentVelocity;
+function smoothTransition(currentValue, targetValue, transitionSpeed) {
+  const difference = targetValue - currentValue;
   const step =
     Math.sign(difference) * Math.min(Math.abs(difference), transitionSpeed);
-  return currentVelocity + step;
-}
-
-function getStageClimbRate(stage, stageClimbRates) {
-  return stageClimbRates[stage] || stageClimbRates.small;
+  return currentValue + step;
 }
 
 function applySailplaneLift(
   sailplane,
   clouds,
-  stageClimbRates,
+  lifecycleConfig,
   sinkRate,
   transitionSpeed,
 ) {
   const cloudAbove = findCloudAbove(sailplane, clouds);
   const climbRate = cloudAbove
-    ? getStageClimbRate(cloudAbove.stage, stageClimbRates)
+    ? getStageClimbRate(cloudAbove.stage, lifecycleConfig)
     : 0;
   const targetVelocity = cloudAbove ? -climbRate : sinkRate;
-  const newVelocity = smoothVelocityTransition(
+  const newVelocity = smoothTransition(
     sailplane.velocityY,
     targetVelocity,
     transitionSpeed,
@@ -644,16 +779,31 @@ function updateSailplanePosition(sailplane, groundY) {
   };
 }
 
-function renderSailplane(context, sailplane) {
-  const drawX = sailplane.x - sailplane.width / 2;
-  const drawY = sailplane.y - sailplane.height / 2;
-  drawRectangle(
+function renderPaperAirplane(context, x, y, width, height, color, direction) {
+  const noseOffsetX = (width / 2) * direction;
+  const tailOffsetX = (-width / 2) * direction;
+  const notchOffsetX = (-width / 2 + width * 0.3) * direction;
+  const wingSpan = height;
+
+  context.fillStyle = color;
+  context.beginPath();
+  context.moveTo(x + noseOffsetX, y);
+  context.lineTo(x + tailOffsetX, y - wingSpan / 2);
+  context.lineTo(x + notchOffsetX, y);
+  context.lineTo(x + tailOffsetX, y + wingSpan / 2);
+  context.closePath();
+  context.fill();
+}
+
+function renderSailplane(context, sailplane, direction) {
+  renderPaperAirplane(
     context,
-    drawX,
-    drawY,
+    sailplane.x,
+    sailplane.y,
     sailplane.width,
     sailplane.height,
     sailplane.color,
+    direction,
   );
 }
 
@@ -682,6 +832,7 @@ function renderFrame(
   mountains,
   farTrees,
   nearTrees,
+  direction,
 ) {
   clearCanvas(context, canvasElement.width, canvasElement.height);
   renderMountains(context, mountains);
@@ -689,36 +840,7 @@ function renderFrame(
   renderTrees(context, nearTrees);
   renderClouds(context, clouds);
   renderGround(context, ground, canvasElement.width);
-  renderSailplane(context, sailplane);
-}
-
-function createGliderConfigurations() {
-  return [
-    {
-      name: "Training",
-      glideRatio: "20:1",
-      sinkRate: 1.8,
-      speedMultiplier: 1.0,
-    },
-    {
-      name: "Standard",
-      glideRatio: "30:1",
-      sinkRate: 1.5,
-      speedMultiplier: 1.3,
-    },
-    {
-      name: "Competition",
-      glideRatio: "50:1",
-      sinkRate: 1,
-      speedMultiplier: 1.8,
-    },
-    {
-      name: "Jantar Std 2",
-      glideRatio: "38:1",
-      sinkRate: 1,
-      speedMultiplier: 2.5,
-    },
-  ];
+  renderSailplane(context, sailplane, direction);
 }
 
 function getGliderAtIndex(gliders, index) {
@@ -742,54 +864,43 @@ document.addEventListener("DOMContentLoaded", () => {
   const gliderName = document.getElementById("gliderName");
   const gliderStats = document.getElementById("gliderStats");
   const context = initializeCanvas(canvas);
-  const stageClimbRates = {
-    invisible: 1.4,
-    small: 1.3,
-    big: 1.2,
-    dying: 1.1,
-  };
-  const gliderConfigurations = createGliderConfigurations();
   let selectedGliderIndex = 1;
-  let currentSinkRate = gliderConfigurations[selectedGliderIndex].sinkRate;
+  let currentSinkRate = GLIDER_CONFIGURATIONS[selectedGliderIndex].sinkRate;
   let currentSpeedMultiplier =
-    gliderConfigurations[selectedGliderIndex].speedMultiplier;
-  const velocityTransitionSpeed = 0.1;
-  const baseCloudSpeed = 2;
-  const baseMountainSpeed = 0.5;
-  const baseFarTreeSpeed = 0.75;
-  const baseNearTreeSpeed = 1.25;
-  const minCloudSpacing = 400;
-  const cloudInvisibleDuration = 60;
-  const cloudSmallDuration = 120;
-  const cloudBigDuration = 300;
-  const cloudDyingDuration = 150;
+    GLIDER_CONFIGURATIONS[selectedGliderIndex].speedMultiplier;
 
   let gameState = createGameState(false, false);
   let ground = createGround(canvas.height);
-  let clouds = createClouds(canvas.width, canvas.height);
+  let clouds = createClouds(
+    canvas.width,
+    canvas.height,
+    CLOUD_LIFECYCLE_CONFIG,
+  );
   let mountains = createMountains(canvas.width, canvas.height);
   let farTrees = createFarTrees(canvas.width, canvas.height);
   let nearTrees = createNearTrees(canvas.width, canvas.height);
   let sailplane = createSailplane(canvas.width, canvas.height);
-  let direction = 1;
+  let targetDirection = 1;
+  let currentDirection = 1;
 
   function resetGame() {
     ground = createGround(canvas.height);
-    clouds = createClouds(canvas.width, canvas.height);
+    clouds = createClouds(canvas.width, canvas.height, CLOUD_LIFECYCLE_CONFIG);
     mountains = createMountains(canvas.width, canvas.height);
     farTrees = createFarTrees(canvas.width, canvas.height);
     nearTrees = createNearTrees(canvas.width, canvas.height);
     sailplane = createSailplane(canvas.width, canvas.height);
-    direction = 1;
+    targetDirection = 1;
+    currentDirection = 1;
   }
 
   startButton.addEventListener("click", () => {
     if (gameState.isGameOver) {
       resetGame();
     }
-    currentSinkRate = gliderConfigurations[selectedGliderIndex].sinkRate;
+    currentSinkRate = GLIDER_CONFIGURATIONS[selectedGliderIndex].sinkRate;
     currentSpeedMultiplier =
-      gliderConfigurations[selectedGliderIndex].speedMultiplier;
+      GLIDER_CONFIGURATIONS[selectedGliderIndex].speedMultiplier;
     updateMenuTitle(menuTitle, "Sail Sweep");
     gameState = createGameState(true, false);
     hideMenu(menu);
@@ -797,7 +908,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   carouselLeft.addEventListener("click", () => {
     const result = getGliderAtIndex(
-      gliderConfigurations,
+      GLIDER_CONFIGURATIONS,
       selectedGliderIndex - 1,
     );
     selectedGliderIndex = result.index;
@@ -806,7 +917,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   carouselRight.addEventListener("click", () => {
     const result = getGliderAtIndex(
-      gliderConfigurations,
+      GLIDER_CONFIGURATIONS,
       selectedGliderIndex + 1,
     );
     selectedGliderIndex = result.index;
@@ -815,7 +926,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   canvas.addEventListener("click", () => {
     if (gameState.isRunning) {
-      direction = -direction;
+      targetDirection = -targetDirection;
     }
   });
 
@@ -830,6 +941,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mountains,
         farTrees,
         nearTrees,
+        currentDirection,
       );
       requestAnimationFrame(gameLoop);
       return;
@@ -837,31 +949,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
     ground = createGround(canvas.height);
 
-    const cloudSpeed = baseCloudSpeed * currentSpeedMultiplier;
-    const mountainSpeed = baseMountainSpeed * currentSpeedMultiplier;
-    const farTreeSpeed = baseFarTreeSpeed * currentSpeedMultiplier;
-    const nearTreeSpeed = baseNearTreeSpeed * currentSpeedMultiplier;
+    currentDirection = smoothTransition(
+      currentDirection,
+      targetDirection,
+      GAME_CONFIG.directionTransitionSpeed,
+    );
+
+    const cloudSpeed = GAME_CONFIG.baseCloudSpeed * currentSpeedMultiplier;
+    const mountainSpeed =
+      GAME_CONFIG.baseMountainSpeed * currentSpeedMultiplier;
+    const farTreeSpeed = GAME_CONFIG.baseFarTreeSpeed * currentSpeedMultiplier;
+    const nearTreeSpeed =
+      GAME_CONFIG.baseNearTreeSpeed * currentSpeedMultiplier;
 
     clouds = updateClouds(
       clouds,
       cloudSpeed,
       canvas.width,
       canvas.height,
-      minCloudSpacing,
-      direction,
-      cloudInvisibleDuration,
-      cloudSmallDuration,
-      cloudBigDuration,
-      cloudDyingDuration,
+      GAME_CONFIG.minCloudSpacing,
+      GAME_CONFIG.maxCloudSpacing,
+      currentDirection,
+      CLOUD_LIFECYCLE_CONFIG,
     );
     mountains = updateMountains(
       mountains,
       mountainSpeed,
-      direction,
+      currentDirection,
       canvas.width,
     );
-    farTrees = updateTrees(farTrees, farTreeSpeed, direction, canvas.width);
-    nearTrees = updateTrees(nearTrees, nearTreeSpeed, direction, canvas.width);
+    farTrees = updateTrees(
+      farTrees,
+      farTreeSpeed,
+      currentDirection,
+      canvas.width,
+    );
+    nearTrees = updateTrees(
+      nearTrees,
+      nearTreeSpeed,
+      currentDirection,
+      canvas.width,
+    );
     sailplane = {
       ...sailplane,
       x: canvas.width / 2,
@@ -870,9 +998,9 @@ document.addEventListener("DOMContentLoaded", () => {
     sailplane = applySailplaneLift(
       sailplane,
       clouds,
-      stageClimbRates,
+      CLOUD_LIFECYCLE_CONFIG,
       currentSinkRate,
-      velocityTransitionSpeed,
+      GAME_CONFIG.velocityTransitionSpeed,
     );
 
     sailplane = updateSailplanePosition(sailplane, ground.y);
@@ -892,6 +1020,7 @@ document.addEventListener("DOMContentLoaded", () => {
       mountains,
       farTrees,
       nearTrees,
+      currentDirection,
     );
     requestAnimationFrame(gameLoop);
   }
