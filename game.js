@@ -78,6 +78,7 @@ const GLIDER_CONFIGURATIONS = [
 ];
 
 const GAME_CONFIG = {
+  targetFPS: 60,
   velocityTransitionSpeed: 0.1,
   directionTransitionSpeed: 0.1,
   baseCloudSpeed: 2,
@@ -86,7 +87,32 @@ const GAME_CONFIG = {
   baseNearTreeSpeed: 1.25,
   minCloudSpacing: 300,
   maxCloudSpacing: 500,
+  pixelsPerMeter: 5,
 };
+
+// ============================================================================
+// TIME UTILITIES
+// ============================================================================
+
+function calculateDeltaTimeMultiplier(deltaTime, targetFPS) {
+  const targetFrameTime = 1000 / targetFPS;
+  return deltaTime / targetFrameTime;
+}
+
+function createTimeState(currentTime) {
+  return {
+    lastTime: currentTime,
+    deltaTime: 0,
+  };
+}
+
+function updateTimeState(timeState, currentTime) {
+  const deltaTime = currentTime - timeState.lastTime;
+  return {
+    lastTime: currentTime,
+    deltaTime: deltaTime,
+  };
+}
 
 // ============================================================================
 // CANVAS UTILITIES
@@ -162,8 +188,8 @@ function createMountains(canvasWidth, canvasHeight) {
   ];
 }
 
-function updateMountainPosition(mountain, speed, direction, canvasWidth) {
-  const newX = mountain.x - speed * direction;
+function updateMountainPosition(mountain, speed, direction, canvasWidth, deltaTimeMultiplier) {
+  const newX = mountain.x - speed * direction * deltaTimeMultiplier;
   let wrappedX = newX;
 
   if (direction > 0) {
@@ -179,9 +205,9 @@ function updateMountainPosition(mountain, speed, direction, canvasWidth) {
   return { ...mountain, x: wrappedX };
 }
 
-function updateMountains(mountains, speed, direction, canvasWidth) {
+function updateMountains(mountains, speed, direction, canvasWidth, deltaTimeMultiplier) {
   return mountains.map((mountain) =>
-    updateMountainPosition(mountain, speed, direction, canvasWidth),
+    updateMountainPosition(mountain, speed, direction, canvasWidth, deltaTimeMultiplier),
   );
 }
 
@@ -298,8 +324,8 @@ function createNearTrees(canvasWidth, canvasHeight) {
   ];
 }
 
-function updateTreePosition(tree, speed, direction, canvasWidth) {
-  const newX = tree.x - speed * direction;
+function updateTreePosition(tree, speed, direction, canvasWidth, deltaTimeMultiplier) {
+  const newX = tree.x - speed * direction * deltaTimeMultiplier;
   let wrappedX = newX;
 
   if (direction > 0) {
@@ -315,9 +341,9 @@ function updateTreePosition(tree, speed, direction, canvasWidth) {
   return { ...tree, x: wrappedX };
 }
 
-function updateTrees(trees, speed, direction, canvasWidth) {
+function updateTrees(trees, speed, direction, canvasWidth, deltaTimeMultiplier) {
   return trees.map((tree) =>
-    updateTreePosition(tree, speed, direction, canvasWidth),
+    updateTreePosition(tree, speed, direction, canvasWidth, deltaTimeMultiplier),
   );
 }
 
@@ -520,9 +546,9 @@ function findNextStage(cloud, effectiveAge, lifecycleConfig) {
   return cloud.stage;
 }
 
-function advanceCloudStage(cloud, lifecycleConfig) {
-  const newAge = cloud.age + 1;
-  const shouldUpdate = newAge % cloud.updateInterval === 0;
+function advanceCloudStage(cloud, lifecycleConfig, deltaTimeMultiplier) {
+  const newAge = cloud.age + deltaTimeMultiplier;
+  const shouldUpdate = Math.floor(newAge / cloud.updateInterval) > Math.floor(cloud.age / cloud.updateInterval);
 
   if (!shouldUpdate) {
     return { ...cloud, age: newAge };
@@ -532,7 +558,7 @@ function advanceCloudStage(cloud, lifecycleConfig) {
   const newStage = findNextStage(cloud, effectiveAge, lifecycleConfig);
   const lastStage = lifecycleConfig.stages[lifecycleConfig.stages.length - 1];
   const isLastStage = newStage === lastStage.name;
-  const dyingAge = isLastStage ? (cloud.dyingAge || 0) + 1 : 0;
+  const dyingAge = isLastStage ? (cloud.dyingAge || 0) + deltaTimeMultiplier : 0;
   const stageProperties = getCloudStageProperties(
     newStage,
     cloud.baseWidth,
@@ -625,8 +651,8 @@ function spawnCloudIfNeeded(
   return clouds;
 }
 
-function updateCloudPosition(cloud, speed, direction) {
-  return { ...cloud, x: cloud.x - speed * direction };
+function updateCloudPosition(cloud, speed, direction, deltaTimeMultiplier) {
+  return { ...cloud, x: cloud.x - speed * direction * deltaTimeMultiplier };
 }
 
 function updateClouds(
@@ -638,12 +664,13 @@ function updateClouds(
   maxSpacing,
   direction,
   lifecycleConfig,
+  deltaTimeMultiplier,
 ) {
   const agedClouds = clouds.map((cloud) =>
-    advanceCloudStage(cloud, lifecycleConfig),
+    advanceCloudStage(cloud, lifecycleConfig, deltaTimeMultiplier),
   );
   const movedClouds = agedClouds.map((cloud) =>
-    updateCloudPosition(cloud, speed, direction),
+    updateCloudPosition(cloud, speed, direction, deltaTimeMultiplier),
   );
   const withoutExpired = removeExpiredClouds(movedClouds, lifecycleConfig);
   const cleanedClouds = removeOffscreenClouds(
@@ -734,10 +761,10 @@ function findCloudAbove(sailplane, clouds) {
   return clouds.find((cloud) => isUnderCloud(sailplane, cloud));
 }
 
-function smoothTransition(currentValue, targetValue, transitionSpeed) {
+function smoothTransition(currentValue, targetValue, transitionSpeed, deltaTimeMultiplier) {
   const difference = targetValue - currentValue;
   const step =
-    Math.sign(difference) * Math.min(Math.abs(difference), transitionSpeed);
+    Math.sign(difference) * Math.min(Math.abs(difference), transitionSpeed * deltaTimeMultiplier);
   return currentValue + step;
 }
 
@@ -747,6 +774,7 @@ function applySailplaneLift(
   lifecycleConfig,
   sinkRate,
   transitionSpeed,
+  deltaTimeMultiplier,
 ) {
   const cloudAbove = findCloudAbove(sailplane, clouds);
   const climbRate = cloudAbove
@@ -757,12 +785,13 @@ function applySailplaneLift(
     sailplane.velocityY,
     targetVelocity,
     transitionSpeed,
+    deltaTimeMultiplier,
   );
   return { ...sailplane, velocityY: newVelocity };
 }
 
-function updateSailplanePosition(sailplane, groundY) {
-  const newY = sailplane.y + sailplane.velocityY;
+function updateSailplanePosition(sailplane, groundY, deltaTimeMultiplier) {
+  const newY = sailplane.y + sailplane.velocityY * deltaTimeMultiplier;
   const minY = sailplane.height / 2;
   const maxY = groundY - sailplane.height / 2;
   const clampedY = Math.max(minY, Math.min(maxY, newY));
@@ -854,6 +883,23 @@ function updateCarouselDisplay(nameElement, statsElement, glider) {
   statsElement.textContent = "Glide Ratio: " + glider.glideRatio;
 }
 
+function calculateHorizontalDistance(currentDistance, speed, pixelsPerMeter, deltaTimeMultiplier) {
+  return currentDistance + (speed * deltaTimeMultiplier) / pixelsPerMeter;
+}
+
+function calculateDistanceFromStart(horizontalMeters, startY, currentY, pixelsPerMeter) {
+  const verticalMeters = (currentY - startY) / pixelsPerMeter;
+  return Math.sqrt(horizontalMeters * horizontalMeters + verticalMeters * verticalMeters);
+}
+
+function formatDistance(distance) {
+  return Math.floor(distance) + " m";
+}
+
+function updateDistanceDisplay(element, distance) {
+  element.textContent = formatDistance(distance);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("gameCanvas");
   const menu = document.getElementById("menu");
@@ -863,6 +909,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const carouselRight = document.getElementById("carouselRight");
   const gliderName = document.getElementById("gliderName");
   const gliderStats = document.getElementById("gliderStats");
+  const distanceDisplay = document.getElementById("distanceDisplay");
   const context = initializeCanvas(canvas);
   let selectedGliderIndex = 1;
   let currentSinkRate = GLIDER_CONFIGURATIONS[selectedGliderIndex].sinkRate;
@@ -882,6 +929,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let sailplane = createSailplane(canvas.width, canvas.height);
   let targetDirection = 1;
   let currentDirection = 1;
+  let horizontalDistanceTraveled = 0;
+  let startY = canvas.height / 2;
+  let timeState = createTimeState(performance.now());
+
+  distanceDisplay.classList.add("hidden");
 
   function resetGame() {
     ground = createGround(canvas.height);
@@ -892,18 +944,29 @@ document.addEventListener("DOMContentLoaded", () => {
     sailplane = createSailplane(canvas.width, canvas.height);
     targetDirection = 1;
     currentDirection = 1;
+    horizontalDistanceTraveled = 0;
+    startY = sailplane.y;
   }
 
   startButton.addEventListener("click", () => {
     if (gameState.isGameOver) {
       resetGame();
     }
+    startY = sailplane.y;
     currentSinkRate = GLIDER_CONFIGURATIONS[selectedGliderIndex].sinkRate;
     currentSpeedMultiplier =
       GLIDER_CONFIGURATIONS[selectedGliderIndex].speedMultiplier;
     updateMenuTitle(menuTitle, "Sail Sweep");
     gameState = createGameState(true, false);
     hideMenu(menu);
+    distanceDisplay.classList.remove("hidden");
+    const distanceFromStart = calculateDistanceFromStart(
+      horizontalDistanceTraveled,
+      startY,
+      sailplane.y,
+      GAME_CONFIG.pixelsPerMeter
+    );
+    updateDistanceDisplay(distanceDisplay, distanceFromStart);
   });
 
   carouselLeft.addEventListener("click", () => {
@@ -930,7 +993,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  function gameLoop() {
+  function gameLoop(currentTime) {
+    timeState = updateTimeState(timeState, currentTime);
+    const deltaTimeMultiplier = calculateDeltaTimeMultiplier(
+      timeState.deltaTime,
+      GAME_CONFIG.targetFPS,
+    );
+
     if (!gameState.isRunning) {
       renderFrame(
         context,
@@ -953,6 +1022,7 @@ document.addEventListener("DOMContentLoaded", () => {
       currentDirection,
       targetDirection,
       GAME_CONFIG.directionTransitionSpeed,
+      deltaTimeMultiplier,
     );
 
     const cloudSpeed = GAME_CONFIG.baseCloudSpeed * currentSpeedMultiplier;
@@ -971,24 +1041,28 @@ document.addEventListener("DOMContentLoaded", () => {
       GAME_CONFIG.maxCloudSpacing,
       currentDirection,
       CLOUD_LIFECYCLE_CONFIG,
+      deltaTimeMultiplier,
     );
     mountains = updateMountains(
       mountains,
       mountainSpeed,
       currentDirection,
       canvas.width,
+      deltaTimeMultiplier,
     );
     farTrees = updateTrees(
       farTrees,
       farTreeSpeed,
       currentDirection,
       canvas.width,
+      deltaTimeMultiplier,
     );
     nearTrees = updateTrees(
       nearTrees,
       nearTreeSpeed,
       currentDirection,
       canvas.width,
+      deltaTimeMultiplier,
     );
     sailplane = {
       ...sailplane,
@@ -1001,14 +1075,30 @@ document.addEventListener("DOMContentLoaded", () => {
       CLOUD_LIFECYCLE_CONFIG,
       currentSinkRate,
       GAME_CONFIG.velocityTransitionSpeed,
+      deltaTimeMultiplier,
     );
 
-    sailplane = updateSailplanePosition(sailplane, ground.y);
+    sailplane = updateSailplanePosition(sailplane, ground.y, deltaTimeMultiplier);
+
+    horizontalDistanceTraveled = calculateHorizontalDistance(
+      horizontalDistanceTraveled,
+      cloudSpeed,
+      GAME_CONFIG.pixelsPerMeter,
+      deltaTimeMultiplier,
+    );
+    const distanceFromStart = calculateDistanceFromStart(
+      horizontalDistanceTraveled,
+      startY,
+      sailplane.y,
+      GAME_CONFIG.pixelsPerMeter
+    );
+    updateDistanceDisplay(distanceDisplay, distanceFromStart);
 
     if (sailplane.isColliding) {
       gameState = createGameState(false, true);
       updateMenuTitle(menuTitle, "Game Over");
       showMenu(menu);
+      distanceDisplay.classList.add("hidden");
     }
 
     renderFrame(
@@ -1025,5 +1115,5 @@ document.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(gameLoop);
   }
 
-  gameLoop();
+  gameLoop(performance.now());
 });

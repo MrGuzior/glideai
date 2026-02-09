@@ -25,7 +25,7 @@ Follow these rules:
 
 10. Do those things only one at a time then cut the completed line paste it into list under point number 12.
     [
-    <!-- Make the clouds bigger and more random -->
+
     ]
 
 11. Refactor the code you just wrote and see if it can be made even easier and even more readable
@@ -76,6 +76,8 @@ Follow these rules:
 - 2026-02-08: Replaced rectangle glider with paper airplane shape using renderPaperAirplane pure function drawing triangular streamlined shape with nose, tail, and wing points.
 - 2026-02-08: Added turn animation to glider by passing direction through renderFrame, renderSailplane, and renderPaperAirplane. Direction value (-1 to 1) scales x-offsets to smoothly flip the airplane during turns.
 - 2026-02-08: Made cloud distribution random with getDistanceToEdge pure function, minCloudSpacing (200) and maxCloudSpacing (500). Clouds spawn with random chance between min/max, guaranteed spawn at max distance.
+- 2026-02-09: Added 2D distance tracking from takeoff point with calculateDistanceFromStart and calculateHorizontalDistance pure functions, distance display now shows Euclidean distance that changes with altitude and horizontal movement.
+- 2026-02-09: Implemented time-based animation with createTimeState, updateTimeState, and calculateDeltaTimeMultiplier pure functions. Added deltaTimeMultiplier parameter to all movement and update functions (updateMountains, updateTrees, updateClouds, advanceCloudStage, smoothTransition, applySailplaneLift, updateSailplanePosition, calculateHorizontalDistance). Game now runs at consistent speed regardless of frame rate, fixing framerate drops and ensuring smooth animation on all devices.
   ]
 
 12. Move the used command here:
@@ -169,6 +171,12 @@ Follow these rules:
    <!-- Update all copy to the name of the app Sail Sweep. -->
 
    <!-- make cloud cycles faster and more random -->
+
+   <!-- Count and display meter flown away from takeoff point -->
+
+   <!-- Instead of just highering the counter display the distance between the starting point and the glider. It should go up and down -->
+
+   <!-- Fix framerate drops when browser in load, make it dependent on time instead of number of frames to make the animation always the same speed on all devices -->
 
 ]
 
